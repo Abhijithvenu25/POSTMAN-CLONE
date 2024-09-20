@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman-like API Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        #api-form {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        #response {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #e1e1e1;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Postman-like API Client</h1>
+    <form id="api-form">
+        <label for="method">HTTP Method:</label>
+        <select id="method">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+        </select>
+
+        <label for="url">URL:</label>
+        <input type="text" id="url" placeholder="http://localhost:5256">
+
+        <label for="headers">Headers (JSON format):</label>
+        <textarea id="headers" placeholder='{"Authorization": "Bearer token"}'>{}</textarea>
+
+        <label for="body">Body (JSON format):</label>
+        <textarea id="body" placeholder='{"key": "value"}'>{}</textarea>
+
+        <label for="token">Bearer Token:</label>
+        <input type="text" id="token" placeholder="Enter your bearer token">
+
+        <button type="submit">Send Request</button>
+    </form>
+    
+    <div id="response" class="hidden">
+        <h2>Response</h2>
+        <pre id="response-content"></pre>
+    </div>
+    
+    <script>
+        document.getElementById('api-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const method = document.getElementById('method').value;
+            const url = document.getElementById('url').value;
+            const headers = JSON.parse(document.getElementById('headers').value || '{}');
+            const body = JSON.parse(document.getElementById('body').value || '{}');
+            const token = document.getElementById('token').value;  // Get the token value from the input
+            
+            // Create the request payload
+            const requestData = {
+                method: method,
+                url: url,
+                headers: headers,
+                body: body,
+                token: token  // Include the token in the request payload
+            };
+            
+            // Send the request to the FastAPI backend
+            const response = await fetch('/send-request', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(requestData)
+            });
+            
+            // Get the response data
+            const responseData = await response.json();
+            
+            // Display the response
+            const responseDiv = document.getElementById('response');
+            responseDiv.classList.remove('hidden');
+            document.getElementById('response-content').textContent = JSON.stringify(responseData, null, 4);
+        });
+    </script>
+</body>
+</html>
