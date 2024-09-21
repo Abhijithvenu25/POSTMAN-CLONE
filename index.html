@@ -84,6 +84,12 @@
         .hidden {
             display: none;
         }
+
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -98,7 +104,7 @@
         </select>
 
         <label for="url">URL:</label>
-        <input type="text" id="url" placeholder="http://localhost:5256">
+        <input type="text" id="url" placeholder="https://api.example.com/resource">
 
         <label for="headers">Headers (JSON format):</label>
         <textarea id="headers" placeholder='{"Authorization": "Bearer token"}'>{}</textarea>
@@ -117,39 +123,75 @@
         <pre id="response-content"></pre>
     </div>
     
+    <div id="error-message" class="error hidden"></div>
+    
     <script>
         document.getElementById('api-form').addEventListener('submit', async function(event) {
             event.preventDefault();
             
+            // Clear previous error message
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.classList.add('hidden');
+            errorMessage.textContent = '';
+            
+            // Collect form data
             const method = document.getElementById('method').value;
             const url = document.getElementById('url').value;
-            const headers = JSON.parse(document.getElementById('headers').value || '{}');
-            const body = JSON.parse(document.getElementById('body').value || '{}');
-            const token = document.getElementById('token').value;  // Get the token value from the input
+            let headers, body;
             
+            try {
+                headers = JSON.parse(document.getElementById('headers').value || '{}');
+                body = JSON.parse(document.getElementById('body').value || '{}');
+            } catch (e) {
+                // Handle JSON parse error
+                errorMessage.textContent = 'Invalid JSON format in Headers or Body.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            const token = document.getElementById('token').value;
+
+            // Check if URL is provided
+            if (!url) {
+                errorMessage.textContent = 'Please provide a URL.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
             // Create the request payload
             const requestData = {
                 method: method,
                 url: url,
                 headers: headers,
                 body: body,
-                token: token  // Include the token in the request payload
+                token: token
             };
-            
-            // Send the request to the FastAPI backend
-            const response = await fetch('/send-request', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(requestData)
-            });
-            
-            // Get the response data
-            const responseData = await response.json();
-            
-            // Display the response
-            const responseDiv = document.getElementById('response');
-            responseDiv.classList.remove('hidden');
-            document.getElementById('response-content').textContent = JSON.stringify(responseData, null, 4);
+
+            try {
+                // Send the request to the FastAPI backend
+                const response = await fetch('http://localhost:5256/request/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Request failed with status ${response.status}`);
+                }
+
+                // Get the response data
+                const responseData = await response.json();
+                
+                // Display the response
+                const responseDiv = document.getElementById('response');
+                responseDiv.classList.remove('hidden');
+                document.getElementById('response-content').textContent = JSON.stringify(responseData, null, 4);
+
+            } catch (error) {
+                // Display error message
+                errorMessage.textContent = error.message;
+                errorMessage.classList.remove('hidden');
+            }
         });
     </script>
 </body>

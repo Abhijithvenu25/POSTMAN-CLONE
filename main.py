@@ -12,7 +12,7 @@ async def About():
     return {'About':'This a simple Postman Clone created by Abhijith Venu ,which can handle the CRED operations'}
 
 
-@app.post('/request')
+@app.post('/request/')
 async def sended_requests(request:Request):
     data = await request.json()
     print(data)
